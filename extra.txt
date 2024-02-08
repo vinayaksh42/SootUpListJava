@@ -1,0 +1,25 @@
+    System.out.println("Call graph next");
+
+    // Create type hierarchy and CHA
+    final ViewTypeHierarchy typeHierarchy = new ViewTypeHierarchy(view);
+    System.out.println(typeHierarchy.subclassesOf(classType));
+    CallGraphAlgorithm cha = new ClassHierarchyAnalysisAlgorithm(view);
+
+    // Create CG by initializing CHA with entry method(s)
+    CallGraph cg = cha.initialize(Collections.singletonList(methodSignature));
+
+    cg.callsFrom(methodSignature).forEach(System.out::println);
+
+    JimpleBasedInterproceduralCFG cfg = new JimpleBasedInterproceduralCFG(view, methodSignature, false, false);
+
+    System.out.println("Printing CFG");
+
+    String finalcfg = cfg.buildICFGGraph(cg);
+    System.out.println(finalcfg);
+
+
+import sootup.analysis.interprocedural.icfg.JimpleBasedInterproceduralCFG;
+import sootup.callgraph.CallGraph;
+import sootup.callgraph.CallGraphAlgorithm;
+import sootup.callgraph.ClassHierarchyAnalysisAlgorithm;
+import sootup.core.typehierarchy.ViewTypeHierarchy;
