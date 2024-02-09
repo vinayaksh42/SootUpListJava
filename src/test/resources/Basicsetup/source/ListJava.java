@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Iterator;
 
 public class ListJava {
     public ListJava() {
@@ -43,7 +44,23 @@ public class ListJava {
         }
 
         // Scenario 7:
-        System.out.println(myList2, get(1));
+        System.out.println(myList2.get(1));
+
+        // Scenario 8:
+        Iterator<String> iterator = myList.iterator();
+        while (iterator.hasNext()) {
+            String item = iterator.next();
+            System.out.println(item);
+        }
+
+        // Scenario 9:
+        if (!myList.isEmpty()) {
+            Iterator<String> iterator1 = myList.iterator();
+            while (iterator1.hasNext()) {
+                String item = iterator1.next();
+                System.out.println(item);
+            }
+        }
 
     }
 }
