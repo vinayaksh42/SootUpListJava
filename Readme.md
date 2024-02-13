@@ -122,3 +122,124 @@ In the above code:
 7. Finally, the number of unsafe usage of ArrayList is reported back:
 ![Screenshot 2024-02-08 at 7 10 27 PM](https://github.com/vinayaksh42/SootUpListJava/assets/54861487/9372c565-38b6-4b71-a9af-29827c0ea42b)
 
+## jimple representation Example:
+```bash
+{
+    java.lang.String[] var0;
+    unknown $stack10, $stack11, $stack12, $stack13, $stack14, $stack15, $stack16, $stack17, $stack18, $stack19, $stack20, $stack21, $stack22, $stack23, $stack24, $stack25, $stack26, $stack27, $stack28, $stack29, $stack30, $stack31, $stack32, $stack33, $stack34, $stack35, $stack36, $stack37, $stack38, $stack39, $stack6, $stack7, $stack8, $stack9, item, iterator, myList;
+
+
+    var0 := @parameter0: java.lang.String[];
+    $stack6 = new java.util.ArrayList;
+    specialinvoke $stack6.<java.util.ArrayList: void <init>()>();
+    myList = $stack6;
+    interfaceinvoke myList.<java.util.List: boolean add(java.lang.Object)>("Hello");
+    interfaceinvoke myList.<java.util.List: boolean add(java.lang.Object)>("World");
+    $stack7 = <java.lang.System: java.io.PrintStream out>;
+    $stack8 = interfaceinvoke myList.<java.util.List: java.lang.Object get(int)>(0);
+    $stack9 = (java.lang.String) $stack8;
+    virtualinvoke $stack7.<java.io.PrintStream: void println(java.lang.String)>($stack9);
+    $stack10 = interfaceinvoke myList.<java.util.List: boolean isEmpty()>();
+
+    if $stack10 != 0 goto label01;
+    $stack37 = <java.lang.System: java.io.PrintStream out>;
+    $stack38 = interfaceinvoke myList.<java.util.List: java.lang.Object get(int)>(1);
+    $stack39 = (java.lang.String) $stack38;
+    virtualinvoke $stack37.<java.io.PrintStream: void println(java.lang.String)>($stack39);
+
+  label01:
+    iterator = interfaceinvoke myList.<java.util.List: java.util.Iterator iterator()>();
+
+    goto label03;
+
+  label02:
+    $stack12 = interfaceinvoke iterator.<java.util.Iterator: java.lang.Object next()>();
+    item = (java.lang.String) $stack12;
+    $stack13 = <java.lang.System: java.io.PrintStream out>;
+    virtualinvoke $stack13.<java.io.PrintStream: void println(java.lang.String)>(item);
+
+  label03:
+    $stack11 = interfaceinvoke iterator.<java.util.Iterator: boolean hasNext()>();
+
+    if $stack11 != 0 goto label02;
+    $stack14 = interfaceinvoke myList.<java.util.List: boolean isEmpty()>();
+
+    if $stack14 != 0 goto label06;
+    iterator = interfaceinvoke myList.<java.util.List: java.util.Iterator iterator()>();
+
+    goto label05;
+
+  label04:
+    $stack35 = interfaceinvoke iterator.<java.util.Iterator: java.lang.Object next()>();
+    item = (java.lang.String) $stack35;
+    $stack36 = <java.lang.System: java.io.PrintStream out>;
+    virtualinvoke $stack36.<java.io.PrintStream: void println(java.lang.String)>(item);
+
+  label05:
+    $stack34 = interfaceinvoke iterator.<java.util.Iterator: boolean hasNext()>();
+
+    if $stack34 != 0 goto label04;
+
+  label06:
+    interfaceinvoke myList.<java.util.List: void clear()>();
+    $stack15 = interfaceinvoke myList.<java.util.List: boolean isEmpty()>();
+
+    if $stack15 != 0 goto label07;
+    $stack31 = <java.lang.System: java.io.PrintStream out>;
+    $stack32 = interfaceinvoke myList.<java.util.List: java.lang.Object get(int)>(0);
+    $stack33 = (java.lang.String) $stack32;
+    virtualinvoke $stack31.<java.io.PrintStream: void println(java.lang.String)>($stack33);
+
+  label07:
+    $stack16 = new java.util.ArrayList;
+    specialinvoke $stack16.<java.util.ArrayList: void <init>()>();
+    item = $stack16;
+    $stack17 = interfaceinvoke item.<java.util.List: boolean isEmpty()>();
+
+    if $stack17 != 0 goto label08;
+    $stack28 = <java.lang.System: java.io.PrintStream out>;
+    $stack29 = interfaceinvoke item.<java.util.List: java.lang.Object get(int)>(0);
+    $stack30 = (java.lang.String) $stack29;
+    virtualinvoke $stack28.<java.io.PrintStream: void println(java.lang.String)>($stack30);
+
+  label08:
+    $stack18 = <java.lang.System: java.io.PrintStream out>;
+    $stack19 = interfaceinvoke item.<java.util.List: java.lang.Object get(int)>(1);
+    $stack20 = (java.lang.String) $stack19;
+    virtualinvoke $stack18.<java.io.PrintStream: void println(java.lang.String)>($stack20);
+    iterator = interfaceinvoke myList.<java.util.List: java.util.Iterator iterator()>();
+
+    goto label10;
+
+  label09:
+    $stack22 = interfaceinvoke iterator.<java.util.Iterator: java.lang.Object next()>();
+    item = (java.lang.String) $stack22;
+    $stack23 = <java.lang.System: java.io.PrintStream out>;
+    virtualinvoke $stack23.<java.io.PrintStream: void println(java.lang.String)>(item);
+
+  label10:
+    $stack21 = interfaceinvoke iterator.<java.util.Iterator: boolean hasNext()>();
+
+    if $stack21 != 0 goto label09;
+    $stack24 = interfaceinvoke myList.<java.util.List: boolean isEmpty()>();
+
+    if $stack24 != 0 goto label13;
+    item = interfaceinvoke myList.<java.util.List: java.util.Iterator iterator()>();
+
+    goto label12;
+
+  label11:
+    $stack26 = interfaceinvoke item.<java.util.Iterator: java.lang.Object next()>();
+    item = (java.lang.String) $stack26;
+    $stack27 = <java.lang.System: java.io.PrintStream out>;
+    virtualinvoke $stack27.<java.io.PrintStream: void println(java.lang.String)>(item);
+
+  label12:
+    $stack25 = interfaceinvoke item.<java.util.Iterator: boolean hasNext()>();
+
+    if $stack25 != 0 goto label11;
+
+  label13:
+    return;
+}
+```
