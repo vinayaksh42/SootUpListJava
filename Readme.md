@@ -59,39 +59,80 @@ In the above code:
 
 ### Analysing the Jimple representation for ArrayList usage:
 ```java
-    List<String> listVariableNames = new ArrayList<>();
-    Set<String> declaredLists = new HashSet<>();
-    boolean isEmptyCheckDone = false;
-    int unsafeOperationsCount = 0;
-
-    // iterate over the sootMethod Jimple statements
     for (Stmt stmt : sootMethod.getBody().getStmts()) {
-      List<Value> usesAndDefs = stmt.getUsesAndDefs();
-      System.out.println(usesAndDefs);
-      // for storing list names
-      if (usesAndDefs.size() > 1) {
-        if (usesAndDefs.get(1).toString().contains("new java.util.ArrayList")) {
-          declaredLists.add(usesAndDefs.get(0).toString());
-        }
-        // Check for variable assignments that are known lists
-        else if (declaredLists.contains(usesAndDefs.get(1).toString())) {
-          listVariableNames.add(usesAndDefs.get(0).toString());
+      if (stmt.containsInvokeExpr()) {
+        AbstractInvokeExpr invokeExpr = (AbstractInvokeExpr) stmt.getInvokeExpr();
+
+        // check if the invoke expression is a call to the get method of an ArrayList
+        MethodSignature arrayListGet = view.getIdentifierFactory().getMethodSignature("java.util.List", "get",
+            "java.lang.Object", Collections.singletonList("int"));
+        if (invokeExpr.getMethodSignature().equals(arrayListGet)) {
+          List<Value> InvokeExprUses = invokeExpr.getUses();
+          // iterate over the uses and check if it is part of the list of variables
+          for (Value use : InvokeExprUses) {
+            if (listVariableNames.contains(use)) {
+              if (!isArraySafe) {
+                arrayUnsafeUsage++;
+              } else {
+                isArraySafe = false;
+              }
+            }
+          }
         }
 
-        if (listVariableNames.contains(usesAndDefs.get(usesAndDefs.size() - 1).toString())) {
-          // Check if this is an emptiness check
-          if (usesAndDefs.get(1).toString().contains("isEmpty()")) {
-            isEmptyCheckDone = true;
-          }
-          // Check for list access
-          else if (usesAndDefs.get(1).toString().contains("get(")
-              || usesAndDefs.get(1).toString().contains("iterator()")) {
-            if (!isEmptyCheckDone) {
-              // If isEmptyCheckDone is false, then it's an unsafe operation
-              unsafeOperationsCount++;
+        // check if the invoke expression is a call to the isEmpty method of an
+        // ArrayList
+        MethodSignature arrayListIsEmpty = view.getIdentifierFactory().getMethodSignature("java.util.List", "isEmpty",
+            "boolean", Collections.emptyList());
+        if (invokeExpr.getMethodSignature().equals(arrayListIsEmpty)) {
+          List<Value> InvokeExprUses = invokeExpr.getUses();
+          for (Value use : InvokeExprUses) {
+            if (listVariableNames.contains(use)) {
+              isArraySafe = true;
             }
-            // Reset the flag after a list access
-            isEmptyCheckDone = false;
+          }
+        }
+
+        // check if the invoke expression is a call to the iterator method of an
+        // ArrayList
+        MethodSignature arrayListIterator = view.getIdentifierFactory().getMethodSignature("java.util.List",
+            "iterator",
+            "java.util.Iterator", Collections.emptyList());
+        if (invokeExpr.getMethodSignature().equals(arrayListIterator)) {
+          List<Value> InvokeExprUses = invokeExpr.getUses();
+          // iterate over the uses and check if it is part of the list of variables
+          for (Value use : InvokeExprUses) {
+            if (listVariableNames.contains(use)) {
+              if (!isArraySafe) {
+                arrayUnsafeUsage++;
+              } else {
+                isArraySafe = false;
+              }
+            }
+          }
+        }
+      } else if (stmt instanceof JGotoStmt) {
+        System.out.println("This is a goto statement");
+      } else if (stmt.branches()) {
+        JIfStmt ifstmt = (JIfStmt) stmt;
+        System.out.println("Condition: " + ifstmt.getCondition());
+      } else if (stmt instanceof JAssignStmt) {
+        AbstractDefinitionStmt defstmt = (AbstractDefinitionStmt) stmt;
+
+        // iterate over TempNames to check if the right operand is stored in TempNames
+        for (Value temp : TempNames) {
+          if (defstmt.getRightOp().equals(temp)) {
+            listVariableNames.add(defstmt.getLeftOp());
+          }
+        }
+
+        // check if the right operand is a new array expression
+        if (defstmt.getRightOp() instanceof JNewExpr) {
+          JNewExpr newExpr = (JNewExpr) defstmt.getRightOp();
+          ReferenceType arrayListType = (ReferenceType) view.getIdentifierFactory()
+              .getClassType("java.util.ArrayList");
+          if (newExpr.getType().equals(arrayListType)) {
+            TempNames.add(defstmt.getLeftOp());
           }
         }
       }
