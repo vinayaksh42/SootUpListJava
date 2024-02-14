@@ -27,7 +27,7 @@ public class BasicSetup {
 
   public static void main(String[] args) {
     AnalysisInputLocation inputLocation = PathBasedAnalysisInputLocation.create(
-        Paths.get("src/test/resources/Basicsetup/binary"), SourceType.Application);
+        Paths.get("target/classes"), SourceType.Application);
 
     // Create a view for project, which allows us to retrieve classes
     View view = new JavaView(inputLocation);
@@ -61,8 +61,10 @@ public class BasicSetup {
 
     List<Value> listVariableNames = new ArrayList<>();
     List<Value> TempNames = new ArrayList<>();
+    List<Stmt> arrayListUnsafeLines = new ArrayList<>();
     boolean isArraySafe = false;
     int arrayUnsafeUsage = 0;
+    int arraySafeUsage = 0;
 
     MethodSignature arrayListIterator = view.getIdentifierFactory().getMethodSignature("java.util.List",
         "iterator",
@@ -86,6 +88,7 @@ public class BasicSetup {
             if (listVariableNames.contains(use)) {
               if (!isArraySafe) {
                 arrayUnsafeUsage++;
+                arrayListUnsafeLines.add(stmt);
               } else {
                 isArraySafe = false;
               }
@@ -100,6 +103,7 @@ public class BasicSetup {
           for (Value use : InvokeExprUses) {
             if (listVariableNames.contains(use)) {
               isArraySafe = true;
+              arraySafeUsage++;
             }
           }
         }
@@ -113,6 +117,7 @@ public class BasicSetup {
             if (listVariableNames.contains(use)) {
               if (!isArraySafe) {
                 arrayUnsafeUsage++;
+                arrayListUnsafeLines.add(stmt);
               } else {
                 isArraySafe = false;
               }
@@ -143,5 +148,12 @@ public class BasicSetup {
       }
     }
     System.out.println("Array Unsafe Usage: " + arrayUnsafeUsage);
+    System.out.println("Array Safe Usage: " + arraySafeUsage);
+
+    // iterate and print the stmt for unsafe ArrayList usage:
+    System.out.println("Unsafe ArrayList Usage:");
+    for (Stmt stmt : arrayListUnsafeLines) {
+      System.out.println(stmt);
+    }
   }
 }

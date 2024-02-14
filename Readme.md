@@ -152,7 +152,15 @@ In the above code:
 5. Track of the different ArrayList is kept and the usage of ArrayList.
 6. If a `get` or `iterator` is used on ArrayList without a preceding `isEmpty` check it is marked as unsafe usage.
 7. Finally, the number of unsafe usage of ArrayList is reported back:
-![Screenshot 2024-02-08 at 7 10 27 PM](https://github.com/vinayaksh42/SootUpListJava/assets/54861487/9372c565-38b6-4b71-a9af-29827c0ea42b)
+```zsh
+Array Unsafe Usage: 4
+Array Safe Usage: 5
+Unsafe ArrayList Usage:
+$stack8 = interfaceinvoke myList.<java.util.List: java.lang.Object get(int)>(0)
+myList2 = interfaceinvoke myList.<java.util.List: java.util.Iterator iterator()>()
+$stack17 = interfaceinvoke myList2.<java.util.List: java.lang.Object get(int)>(1)
+item = interfaceinvoke myList.<java.util.List: java.util.Iterator iterator()>()
+```
 
 ## Jimple representation Example:
 ```bash
