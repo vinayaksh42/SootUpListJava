@@ -59,13 +59,26 @@ In the above code:
 
 ### Analysing the Jimple representation for ArrayList usage:
 ```java
+    List<Value> listVariableNames = new ArrayList<>();
+    List<Value> TempNames = new ArrayList<>();
+    boolean isArraySafe = false;
+    int arrayUnsafeUsage = 0;
+
+    MethodSignature arrayListIterator = view.getIdentifierFactory().getMethodSignature("java.util.List",
+        "iterator",
+        "java.util.Iterator", Collections.emptyList());
+    MethodSignature arrayListGet = view.getIdentifierFactory().getMethodSignature("java.util.List", "get",
+        "java.lang.Object", Collections.singletonList("int"));
+    MethodSignature arrayListIsEmpty = view.getIdentifierFactory().getMethodSignature("java.util.List", "isEmpty",
+        "boolean", Collections.emptyList());
+    ReferenceType arrayListType = (ReferenceType) view.getIdentifierFactory()
+        .getClassType("java.util.ArrayList");
+
+    // iterate over the sootMethod Jimple statements
     for (Stmt stmt : sootMethod.getBody().getStmts()) {
       if (stmt.containsInvokeExpr()) {
         AbstractInvokeExpr invokeExpr = (AbstractInvokeExpr) stmt.getInvokeExpr();
-
         // check if the invoke expression is a call to the get method of an ArrayList
-        MethodSignature arrayListGet = view.getIdentifierFactory().getMethodSignature("java.util.List", "get",
-            "java.lang.Object", Collections.singletonList("int"));
         if (invokeExpr.getMethodSignature().equals(arrayListGet)) {
           List<Value> InvokeExprUses = invokeExpr.getUses();
           // iterate over the uses and check if it is part of the list of variables
@@ -82,8 +95,6 @@ In the above code:
 
         // check if the invoke expression is a call to the isEmpty method of an
         // ArrayList
-        MethodSignature arrayListIsEmpty = view.getIdentifierFactory().getMethodSignature("java.util.List", "isEmpty",
-            "boolean", Collections.emptyList());
         if (invokeExpr.getMethodSignature().equals(arrayListIsEmpty)) {
           List<Value> InvokeExprUses = invokeExpr.getUses();
           for (Value use : InvokeExprUses) {
@@ -95,9 +106,6 @@ In the above code:
 
         // check if the invoke expression is a call to the iterator method of an
         // ArrayList
-        MethodSignature arrayListIterator = view.getIdentifierFactory().getMethodSignature("java.util.List",
-            "iterator",
-            "java.util.Iterator", Collections.emptyList());
         if (invokeExpr.getMethodSignature().equals(arrayListIterator)) {
           List<Value> InvokeExprUses = invokeExpr.getUses();
           // iterate over the uses and check if it is part of the list of variables
@@ -112,10 +120,9 @@ In the above code:
           }
         }
       } else if (stmt instanceof JGotoStmt) {
-        System.out.println("This is a goto statement");
+        continue;
       } else if (stmt.branches()) {
-        JIfStmt ifstmt = (JIfStmt) stmt;
-        System.out.println("Condition: " + ifstmt.getCondition());
+        continue;
       } else if (stmt instanceof JAssignStmt) {
         AbstractDefinitionStmt defstmt = (AbstractDefinitionStmt) stmt;
 
@@ -129,35 +136,19 @@ In the above code:
         // check if the right operand is a new array expression
         if (defstmt.getRightOp() instanceof JNewExpr) {
           JNewExpr newExpr = (JNewExpr) defstmt.getRightOp();
-          ReferenceType arrayListType = (ReferenceType) view.getIdentifierFactory()
-              .getClassType("java.util.ArrayList");
           if (newExpr.getType().equals(arrayListType)) {
             TempNames.add(defstmt.getLeftOp());
           }
         }
       }
     }
+    System.out.println("Array Unsafe Usage: " + arrayUnsafeUsage);
 ```
 In the above code:
 1. Iteration occurs over Stmt of the Jimple representation.
-2. ArrayList variable name is stored for future reference, it is observed that all ArrayList declarations contain `new java.util.ArrayList`. Shown in the below output:
-```zsh
-[$stack4, new java.util.ArrayList]
-[$stack4, specialinvoke $stack4.<java.util.ArrayList: void <init>()>()]
-[myList, $stack4]
-```
+2. We look for `JAssignStmt` as it signifies existence of a JAVA assignment statement. We then check if it is a `JNewExpr`, If it is we check if it is a `java.util.list` ReferenceType expression.
 3. The stored ArrayList variable name is used to check for usage of ArrayList.
-4. The ArrayList usage occurs in the following way in Jimple representation:
-```zsh
-// get method on ArrayList
-[$stack6, interfaceinvoke myList.<java.util.List: java.lang.Object get(int)>(0), 0, myList]
-
-// isEmpty check on ArrayList
-[$stack8, interfaceinvoke myList.<java.util.List: boolean isEmpty()>(), myList]
-
-// loop iteration on ArrayList
-[l3, interfaceinvoke myList.<java.util.List: java.util.Iterator iterator()>(), myList]
-```
+4. We check for `invokeExpr`, if it is a invoke expression we check if it is a get, isEmpty or iterator method on the ArrayList variable name stored earlier. We have different `if` condition for comparing and checking if it is of a particular `MethodSignature`
 5. Track of the different ArrayList is kept and the usage of ArrayList.
 6. If a `get` or `iterator` is used on ArrayList without a preceding `isEmpty` check it is marked as unsafe usage.
 7. Finally, the number of unsafe usage of ArrayList is reported back:
