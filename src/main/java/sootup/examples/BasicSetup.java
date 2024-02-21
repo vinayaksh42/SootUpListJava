@@ -4,6 +4,8 @@ import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import sootup.core.inputlocation.AnalysisInputLocation;
 import sootup.core.jimple.basic.Value;
@@ -22,12 +24,24 @@ import sootup.core.jimple.common.expr.AbstractInvokeExpr;
 import sootup.core.jimple.common.expr.JNewExpr;
 import sootup.core.jimple.common.stmt.JAssignStmt;
 import sootup.core.jimple.common.stmt.JGotoStmt;
+import sootup.analysis.intraprocedural.AbstractFlowAnalysis;
+import sootup.core.graph.StmtGraph;
 
 public class BasicSetup {
 
   public static void main(String[] args) {
+    // constant declaration
+    String listClassName = ListConstants.LIST_CLASS_NAME;
+    String iteratorMethodName = ListConstants.ITERATOR_METHOD_NAME;
+    String getMethodName = ListConstants.GET_METHOD_NAME;
+    String isEmptyMethodName = ListConstants.IS_EMPTY_METHOD_NAME;
+    String iteratorClassName = ListConstants.ITERATOR_CLASS_NAME;
+    String objectClassName = ListConstants.OBJECT_CLASS_NAME;
+    List<String> emptyList = ListConstants.EMPTY_LIST;
+    List<String> singletonIntList = ListConstants.SINGLETON_INT_LIST;
+
     AnalysisInputLocation inputLocation = PathBasedAnalysisInputLocation.create(
-        Paths.get("target/classes"), SourceType.Application);
+        Paths.get("src/test/resources/Basicsetup/binary"), SourceType.Application);
 
     // Create a view for project, which allows us to retrieve classes
     View view = new JavaView(inputLocation);
@@ -59,20 +73,21 @@ public class BasicSetup {
     // Retrieve the specified method from the class.
     SootMethod sootMethod = sootClass.getMethod(methodSignature.getSubSignature()).get();
 
-    List<Value> listVariableNames = new ArrayList<>();
     List<Value> TempNames = new ArrayList<>();
-    List<Stmt> arrayListUnsafeLines = new ArrayList<>();
-    boolean isArraySafe = false;
-    int arrayUnsafeUsage = 0;
-    int arraySafeUsage = 0;
+    Map<Value, Boolean> variableMap = new HashMap<>();
+    List<Stmt> arrayListUnsafeStmt = new ArrayList<>();
+    int arrayUnsafeUsageCount = 0;
+    int arraySafeUsageCount = 0;
 
-    MethodSignature arrayListIterator = view.getIdentifierFactory().getMethodSignature("java.util.List",
-        "iterator",
-        "java.util.Iterator", Collections.emptyList());
-    MethodSignature arrayListGet = view.getIdentifierFactory().getMethodSignature("java.util.List", "get",
-        "java.lang.Object", Collections.singletonList("int"));
-    MethodSignature arrayListIsEmpty = view.getIdentifierFactory().getMethodSignature("java.util.List", "isEmpty",
-        "boolean", Collections.emptyList());
+    MethodSignature arrayListIterator = view.getIdentifierFactory().getMethodSignature(
+        listClassName, iteratorMethodName, iteratorClassName, emptyList);
+
+    MethodSignature arrayListGet = view.getIdentifierFactory().getMethodSignature(
+        listClassName, getMethodName, objectClassName, singletonIntList);
+
+    MethodSignature arrayListIsEmpty = view.getIdentifierFactory().getMethodSignature(
+        listClassName, isEmptyMethodName, "boolean", emptyList);
+
     ReferenceType arrayListType = (ReferenceType) view.getIdentifierFactory()
         .getClassType("java.util.ArrayList");
 
@@ -85,12 +100,12 @@ public class BasicSetup {
           List<Value> InvokeExprUses = invokeExpr.getUses();
           // iterate over the uses and check if it is part of the list of variables
           for (Value use : InvokeExprUses) {
-            if (listVariableNames.contains(use)) {
-              if (!isArraySafe) {
-                arrayUnsafeUsage++;
-                arrayListUnsafeLines.add(stmt);
+            if (variableMap.containsKey(use)) {
+              if (!variableMap.get(use)) {
+                arrayUnsafeUsageCount++;
+                arrayListUnsafeStmt.add(stmt);
               } else {
-                isArraySafe = false;
+                variableMap.put(use, false);
               }
             }
           }
@@ -101,9 +116,9 @@ public class BasicSetup {
         if (invokeExpr.getMethodSignature().equals(arrayListIsEmpty)) {
           List<Value> InvokeExprUses = invokeExpr.getUses();
           for (Value use : InvokeExprUses) {
-            if (listVariableNames.contains(use)) {
-              isArraySafe = true;
-              arraySafeUsage++;
+            if (variableMap.containsKey(use)) {
+              arraySafeUsageCount++;
+              variableMap.put(use, true);
             }
           }
         }
@@ -114,12 +129,12 @@ public class BasicSetup {
           List<Value> InvokeExprUses = invokeExpr.getUses();
           // iterate over the uses and check if it is part of the list of variables
           for (Value use : InvokeExprUses) {
-            if (listVariableNames.contains(use)) {
-              if (!isArraySafe) {
-                arrayUnsafeUsage++;
-                arrayListUnsafeLines.add(stmt);
+            if (variableMap.containsKey(use)) {
+              if (!variableMap.get(use)) {
+                arrayUnsafeUsageCount++;
+                arrayListUnsafeStmt.add(stmt);
               } else {
-                isArraySafe = false;
+                variableMap.put(use, false);
               }
             }
           }
@@ -134,7 +149,7 @@ public class BasicSetup {
         // iterate over TempNames to check if the right operand is stored in TempNames
         for (Value temp : TempNames) {
           if (defstmt.getRightOp().equals(temp)) {
-            listVariableNames.add(defstmt.getLeftOp());
+            variableMap.put(defstmt.getLeftOp(), false);
           }
         }
 
@@ -147,12 +162,12 @@ public class BasicSetup {
         }
       }
     }
-    System.out.println("Array Unsafe Usage: " + arrayUnsafeUsage);
-    System.out.println("Array Safe Usage: " + arraySafeUsage);
+    System.out.println("Array Unsafe Usage: " + arrayUnsafeUsageCount);
+    System.out.println("Array Safe Usage: " + arraySafeUsageCount);
 
     // iterate and print the stmt for unsafe ArrayList usage:
     System.out.println("Unsafe ArrayList Usage:");
-    for (Stmt stmt : arrayListUnsafeLines) {
+    for (Stmt stmt : arrayListUnsafeStmt) {
       System.out.println(stmt);
     }
   }
