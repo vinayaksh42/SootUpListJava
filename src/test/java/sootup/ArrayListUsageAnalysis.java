@@ -1,4 +1,4 @@
-package sootup.examples;
+package sootup;
 
 import java.nio.file.*;
 import java.util.ArrayList;
@@ -24,21 +24,12 @@ import sootup.core.jimple.common.expr.AbstractInvokeExpr;
 import sootup.core.jimple.common.expr.JNewExpr;
 import sootup.core.jimple.common.stmt.JAssignStmt;
 import sootup.core.jimple.common.stmt.JGotoStmt;
-import sootup.analysis.intraprocedural.AbstractFlowAnalysis;
-import sootup.core.graph.StmtGraph;
 
-public class BasicSetup {
+import sootup.examples.Constant.ListConstants;
+
+public class ArrayListUsageAnalysis {
 
   public static void main(String[] args) {
-    // constant declaration
-    String listClassName = ListConstants.LIST_CLASS_NAME;
-    String iteratorMethodName = ListConstants.ITERATOR_METHOD_NAME;
-    String getMethodName = ListConstants.GET_METHOD_NAME;
-    String isEmptyMethodName = ListConstants.IS_EMPTY_METHOD_NAME;
-    String iteratorClassName = ListConstants.ITERATOR_CLASS_NAME;
-    String objectClassName = ListConstants.OBJECT_CLASS_NAME;
-    List<String> emptyList = ListConstants.EMPTY_LIST;
-    List<String> singletonIntList = ListConstants.SINGLETON_INT_LIST;
 
     AnalysisInputLocation inputLocation = PathBasedAnalysisInputLocation.create(
         Paths.get("src/test/resources/Basicsetup/binary"), SourceType.Application);
@@ -54,24 +45,24 @@ public class BasicSetup {
         .getMethodSignature(
             classType, "main", "void", Collections.singletonList("java.lang.String[]"));
 
-    if (!view.getClass(classType).isPresent()) {
-      System.out.println("Class not found!");
-      return;
-    }
-
     // Retrieve the specified class from the project.
     SootClass sootClass = view.getClass(classType).get();
 
     // Retrieve method
     view.getMethod(methodSignature);
 
-    if (!sootClass.getMethod(methodSignature.getSubSignature()).isPresent()) {
-      System.out.println("Method not found!");
-      return; // Exit if the method is not found
-    }
-
     // Retrieve the specified method from the class.
     SootMethod sootMethod = sootClass.getMethod(methodSignature.getSubSignature()).get();
+
+    // constant declaration
+    String listClassName = ListConstants.LIST_CLASS_NAME;
+    String iteratorMethodName = ListConstants.ITERATOR_METHOD_NAME;
+    String getMethodName = ListConstants.GET_METHOD_NAME;
+    String isEmptyMethodName = ListConstants.IS_EMPTY_METHOD_NAME;
+    String iteratorClassName = ListConstants.ITERATOR_CLASS_NAME;
+    String objectClassName = ListConstants.OBJECT_CLASS_NAME;
+    List<String> emptyList = ListConstants.EMPTY_LIST;
+    List<String> singletonIntList = ListConstants.SINGLETON_INT_LIST;
 
     List<Value> TempNames = new ArrayList<>();
     Map<Value, Boolean> variableMap = new HashMap<>();

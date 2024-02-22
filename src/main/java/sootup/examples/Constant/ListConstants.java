@@ -1,4 +1,4 @@
-package sootup.examples;
+package sootup.examples.Constant;
 
 import java.util.Collections;
 import java.util.List;
